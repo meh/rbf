@@ -137,7 +137,6 @@ class Interpreter
   define_method ?, do
     @storage.set @input.read_char
   end
-
 end
 
 end

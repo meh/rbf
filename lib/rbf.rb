@@ -32,4 +32,8 @@ module RBF
   def self.execute (file, options={})
     evaluate(File.read(file), options)
   end
+
+  def self.[] (text, syntax=nil)
+    evaluate(text, :catch => true, :syntax => syntax)
+  end
 end
