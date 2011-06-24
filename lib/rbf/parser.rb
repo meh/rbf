@@ -15,7 +15,7 @@ require 'parslet'
 module RBF
 
 class Parser < Parslet::Parser
-  def self.apply (keys)
+  def self.syntax (keys)
     klass = self.clone
     
     klass.class_eval {
@@ -67,6 +67,19 @@ class Parser < Parslet::Parser
   }
 
   root :code
+end
+
+class Transform < Parslet::Transform
+  rule(?> => simple(:x)) { ?> }
+  rule(?< => simple(:x)) { ?< }
+
+  rule(?+ => simple(:x)) { ?+ }
+  rule(?- => simple(:x)) { ?- }
+
+  rule(?. => simple(:x)) { ?. }
+  rule(?, => simple(:x)) { ?, }
+
+  rule(:loop => subtree(:x)) { x }
 end
 
 end

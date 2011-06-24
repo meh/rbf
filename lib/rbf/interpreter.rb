@@ -33,68 +33,107 @@ end
 module RBF
 
 class Interpreter
-  class Storage < Array
-    def initialize (*args)
-      super
+  class Storage < Hash
+    attr_reader :position
 
-      @pointer = 0
+    def initialize (data)
+      if data.is_a?(Array)
+        parent = {}
 
-      check!
+        data.each_with_index {|value, index|
+          parent[index] = value
+        }
+
+        super(parent)
+      else
+        super
+      end
+
+      @position = 0
     end
 
     def check!
-      if self[@pointer].nil?
-        self[@pointer] = 0
+      unless self[@position].is_a?(Integer)
+        self[@position] = 0
       end
     end
 
     def forward!
-      @pointer += 1
-
-      check!
+      @position += 1
     end
 
     def backward!
-      @pointer -= 1
-
-      check!
+      @position -= 1
     end 
 
     def increase!
-      self[@pointer] += 1
+      check!
+
+      self[@position] += 1
     end
 
     def decrease!
-      self[@pointer] -= 1
+      check!
+
+      self[@position] -= 1
     end
 
-    def set (value)
-      self[@pointer] = value.to_i
+    def set (value, position=nil)
+      self[position || @position] = value.ord
     end
 
-    def get
-      self[@pointer].to_i
+    def get (position=nil)
+      self[position || @position].to_i rescue 0
+    end
+
+    def inspect
+      "#<Storage(#{position}): #{super}>"
     end
   end
 
-  def initialize
-    @storage = Storage.new
+  attr_reader :options, :storage
+
+  def initialize (options={})
+    @options = options
+
+    @storage = Storage.new(options[:env] || [])
     @input   = STDIN
+    @output  = STDOUT
+
+    @parser    = RBF::Parser.syntax(RBF.syntax(options[:syntax])).new
+    @transform = RBF::Transform.new
+    @optimizer = RBF::Optimizer.new(options)
+  end
+  
+  def parse (text)
+    return text if text.is_a?(Array)
+
+    parsed = @parser.parse_with_debug(text)
+
+    raise SyntaxError, 'There is a syntax error' unless parsed
+
+    @optimizer.optimize(@transform.apply(parsed))
   end
 
-  def evaluate (tree, options={})
+  def evaluate (tree, options=nil)
+    options ||= {}
+
     if options[:catch]
       @output = StringIO.new
     else
       @output = STDOUT
     end
 
-    cycle(tree)
+    cycle(parse(tree))
 
     if options[:catch]
       @output.rewind
       @output.read
     end
+  end
+
+  def execute (path, options=nil)
+    evaluate(File.read(path), options)
   end
 
   def cycle (tree)
@@ -130,7 +169,7 @@ class Interpreter
   end
 
   define_method ?. do
-    @output.print @storage.get.chr
+    @output.print @storage.get.chr rescue nil
     @output.flush
   end
 

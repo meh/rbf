@@ -11,4 +11,11 @@ describe RBF do
       RBF.parse('XD XD [PLS]', RBF::Syntax::Nintendo).should == ["+", "+", ["."]]
     end
   end
+
+  describe '#optimize' do
+    it 'optimizes correctly +- and -+' do
+      RBF.optimize(RBF.parse('+-')).should == []
+      RBF.optimize(RBF.parse('-+')).should == []
+    end
+  end
 end
