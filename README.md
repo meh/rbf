@@ -8,6 +8,7 @@ you can define your own syntax (aka aliases) to use as a brainfuck language.
 
 
 This is the default syntax:
+
 ```ruby
 { 
   :forward  => '>',
@@ -25,6 +26,7 @@ This is the default syntax:
 ```
 
 And this is a custom syntax:
+
 ```ruby
 { 
   :forward  => '!!!!',
