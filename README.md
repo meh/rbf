@@ -43,6 +43,8 @@ And this is a custom syntax:
 }
 ```
 
+You can also run brainfuck sources or run a brainfuck repl, just use the rbf binary.
+
 Examples
 --------
 
