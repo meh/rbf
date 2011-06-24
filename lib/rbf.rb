@@ -90,11 +90,24 @@ module RBF
               STDOUT.puts 'Command not found or used improperly'.red
           end
         else
-          output = interpreter.evaluate(line, interpreter.options.merge(:catch => true))
+          interpreter.evaluate(line, interpreter.options.merge(:output => Class.new {
+            attr_reader :last
 
-          print output
-          print "\n" unless output.empty? || output.end_with?("\n")
+            def print (text)
+              STDOUT.print(text)
+
+              @last = text[-1]
+            end
+
+            def flush
+              STDOUT.sync
+            end
+          }.new))
+
+          puts if interpreter.output.last != "\n"
         end
+      rescue SyntaxError
+        next
       rescue
         STDOUT.puts $!.inspect.red, $@.join("\n")
       end

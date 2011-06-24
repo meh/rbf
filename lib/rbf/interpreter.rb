@@ -16,14 +16,14 @@ require 'rbf/interpreter/storage'
 module RBF
 
 class Interpreter
-  attr_reader :options, :storage
+  attr_reader :options, :storage, :output
 
   def initialize (options={})
     @options = options
 
     @storage = Storage.new(options[:env] || [])
     @input   = STDIN
-    @output  = STDOUT
+    @output  = options[:output] || STDOUT
 
     @parser    = RBF::Parser.syntax(RBF.syntax(options[:syntax])).new
     @transform = RBF::Transform.new
@@ -47,7 +47,7 @@ class Interpreter
     if options[:catch]
       @output = StringIO.new
     else
-      @output = STDOUT
+      @output = options[:output] || STDOUT
     end
 
     tree = parse(tree)
@@ -71,9 +71,9 @@ class Interpreter
   def cycle (tree)
     tree.each {|token|
       if token.is_a?(Array)
-        self.loop(token)
+        loop(token)
       else
-        self.send(token)
+        send(token)
       end
     }
   end
@@ -101,7 +101,7 @@ class Interpreter
   end
 
   define_method ?. do
-    @output.print @storage.get.chr rescue nil
+    @output.print [@storage.get].pack('U') rescue 0
     @output.flush
   end
 
