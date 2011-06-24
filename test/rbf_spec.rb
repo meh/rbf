@@ -26,5 +26,9 @@ describe RBF do
     it 'optimizes correctly empty loops' do
       RBF.optimize('[[][[[]]]]').should == []
     end
+
+    it 'optimizes correctly +[+[+-]-]-' do
+      RBF.optimize('+[+[+-]-]-').should == []
+    end
   end
 end

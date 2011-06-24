@@ -38,10 +38,13 @@ class Optimizer
 
   def optimize (tree)
     result = tree.clone
+    algos  = algorithms
 
-    algorithms.each {|alg|
-      alg.optimize(result)
-    }
+    begin
+      changed = algos.any? {|algo|
+        algo.optimize(result)
+      }
+    end while changed
 
     result
   end
@@ -53,33 +56,34 @@ class Optimizer
   end
 
   optimization :useless_operations do |tree|
-    i       = 0
     changed = false
+    i       = 0
 
     until i >= tree.length
       if tree[i].is_a?(Array) && tree[i + 1].is_a?(Array)
-        optimize(tree[i])
-        optimize(tree[i + 1])
+        changed ||= optimize(tree[i])
+        changed ||= optimize(tree[i + 1])
 
         i += 2
       elsif tree[i].is_a?(Array)
-        optimize(tree[i])
+        changed ||= optimize(tree[i])
 
         i += 1
       elsif [[?+, ?-], [?-, ?+], [?>, ?<], [?<, ?>]].member?(tree[i ... i + 2])
         tree.slice!(i ... i + 2)
 
-        changed = true
+        changed ||= true
       else
         i += 1
       end
     end
 
-    optimize(tree) if changed
+    changed
   end
 
   optimization :clear_empty_loops do |tree|
-    i = 0
+    changed = false
+    i       = 0
 
     until i >= tree.length
       if !tree[i].is_a?(Array)
@@ -87,9 +91,11 @@ class Optimizer
 
         next
       else
-        optimize(tree[i])
+        changed ||= optimize(tree[i])
 
         if tree[i].empty?
+          changed ||= true
+
           unless @warned
             @warned = true
             warn 'Optimizing out one or more potentially dangerous empty loops'
@@ -101,6 +107,8 @@ class Optimizer
         end
       end
     end
+
+    changed
   end
 end
 
