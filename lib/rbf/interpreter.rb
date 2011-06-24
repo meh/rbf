@@ -89,6 +89,15 @@ class Interpreter
       @output = STDOUT
     end
 
+    cycle(tree)
+
+    if options[:catch]
+      @output.rewind
+      @output.read
+    end
+  end
+
+  def cycle (tree)
     tree.each {|token|
       if token.is_a?(Array)
         self.loop(token)
@@ -96,10 +105,11 @@ class Interpreter
         self.send(token)
       end
     }
+  end
 
-    if options[:catch]
-      @output.rewind
-      @output.read
+  def loop (tree)
+    while @storage.get != 0
+      cycle(tree)
     end
   end
 
@@ -128,11 +138,6 @@ class Interpreter
     @storage.set @input.read_char
   end
 
-  define_method :loop do |code|
-    while @storage.get != 0
-      evaluate(code)
-    end
-  end
 end
 
 end

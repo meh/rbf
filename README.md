@@ -51,4 +51,6 @@ require 'rbf'
 
 RBF.parse('++[.]')                              # => ["+", "+", ["."]]
 RBF.parse('XD XD [PLS]', RBF::Syntax::Nintendo) # => ["+", "+", ["."]]
+
+RBF.evaluate('+++++++++++++++++++++++++++++++++++++++++++++++++.', :catch => true) # => "1"
 ```

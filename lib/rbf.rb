@@ -18,18 +18,18 @@ require 'rbf/interpreter'
 require 'parslet/convenience'
 
 module RBF
-  def self.parse (text, keys=Syntax::Default)
-    Transform.new.apply(Parser.apply(keys).new.parse_with_debug(text)) or
+  def self.parse (text, syntax=nil)
+    Transform.new.apply(Parser.apply(syntax || Syntax::Default).new.parse_with_debug(text)) or
       raise SyntaxError, 'There is a syntax error'
   end
 
-  def self.evaluate (text, keys=Syntax::Default)
-    tree = text.is_a?(Array) ? text : parse(text.to_s, keys)
+  def self.evaluate (text, options={})
+    tree = text.is_a?(Array) ? text : parse(text.to_s, options[:syntax])
 
-    Interpreter.new.evaluate(tree)
+    Interpreter.new.evaluate(tree, options)
   end
 
-  def self.execute (file, keys=Syntax::Default)
-    evaluate(File.read(file), keys)
+  def self.execute (file, options={})
+    evaluate(File.read(file), options)
   end
 end
