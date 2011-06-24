@@ -16,13 +16,18 @@ class Optimizer
   class Algorithm
     attr_reader :optimizer
 
-    def initialize (optimizer)
+    def initialize (optimizer, &block)
       @optimizer = optimizer
+      @block     = block
     end
 
     def optimize (tree)
-      nil
+      self.instance_exec(tree, &@block)
     end
+  end
+
+  def self.optimization (name, &block)
+    (@@optimizations ||= []) << [name, block]
   end
 
   attr_reader :options
@@ -35,38 +40,66 @@ class Optimizer
     result = tree.clone
 
     algorithms.each {|alg|
-      alg.new(self).optimize(result)
+      alg.optimize(result)
     }
 
     result
   end
 
   def algorithms
-    Optimizer.constants.map {|const|
-      Optimizer.const_get(const) unless options[const.to_s.downcase.to_sym] == false
+    @@optimizations.map {|(name, block)|
+      Algorithm.new(self, &block) unless options[name] == false
     }.compact
   end
 
-  class UselessOperations < Algorithm
-    def optimize (tree)
-      i = 0
+  optimization :useless_operations do |tree|
+    i       = 0
+    changed = false
 
-      until i >= tree.length
-        if tree[i].is_a?(Array) && tree[i + 1].is_a?(Array)
-          optimize(tree[i])
-          optimize(tree[i + 1])
+    until i >= tree.length
+      if tree[i].is_a?(Array) && tree[i + 1].is_a?(Array)
+        optimize(tree[i])
+        optimize(tree[i + 1])
 
-          i += 2
-        elsif tree[i].is_a?(Array)
-          optimize(tree[i])
+        i += 2
+      elsif tree[i].is_a?(Array)
+        optimize(tree[i])
 
-          i += 1
-        elsif [[?+, ?-], [?-, ?+], [?>, ?<], [?<, ?>]].member?(tree[i ... i + 2])
-          tree.slice!(i ... i + 2)
+        i += 1
+      elsif [[?+, ?-], [?-, ?+], [?>, ?<], [?<, ?>]].member?(tree[i ... i + 2])
+        tree.slice!(i ... i + 2)
+
+        changed = true
+      else
+        i += 1
+      end
+    end
+
+    optimize(tree) if changed
+  end
+
+  optimization :clear_empty_loops do |tree|
+    i = 0
+
+    until i >= tree.length
+      if !tree[i].is_a?(Array)
+        i += 1
+
+        next
+      else
+        optimize(tree[i])
+
+        if tree[i].empty?
+          unless @warned
+            @warned = true
+            warn 'Optimizing out one or more potentially dangerous empty loops'
+          end
+
+          tree.delete_at(i)
         else
           i += 1
         end
-      end 
+      end
     end
   end
 end

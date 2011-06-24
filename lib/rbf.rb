@@ -13,9 +13,8 @@
 require 'rbf/syntax'
 require 'rbf/parser'
 require 'rbf/optimizer'
+require 'rbf/jit'
 require 'rbf/interpreter'
-
-require 'parslet/convenience'
 
 module RBF
   def self.syntax (name)
@@ -74,17 +73,21 @@ module RBF
             when 'storage'
               STDOUT.puts interpreter.storage.inspect
 
-            when 'position'
-              STDOUT.puts interpreter.storage.position.to_s.bold
+            when /^position(?:\s+(\d+))?$/
+              if $1
+                interpreter.storage.position = $1
+              else
+                STDOUT.puts interpreter.storage.position.to_s.bold
+              end
 
-            when /^get(?:\s*(\d+))?$/
-              STDOUT.puts "#{($1 || interpreter.storage.position).to_s.bold}: #{interpreter.storage.get($1.to_i)}"
+            when /^get(?:\s+(\d+))?$/
+              STDOUT.puts "#{($1 || interpreter.storage.position).to_s.bold}: #{interpreter.storage.get($1)}"
 
             when /^set(?:\s+(\d+)\s+(\d+))/
               interpreter.storage.set($2.to_i, $1.to_i)
 
             else
-              STDOUT.puts 'Command not found'.red
+              STDOUT.puts 'Command not found or used improperly'.red
           end
         else
           output = interpreter.evaluate(line, interpreter.options.merge(:catch => true))

@@ -11,6 +11,7 @@
 #++
 
 require 'parslet'
+require 'parslet/convenience'
 
 module RBF
 

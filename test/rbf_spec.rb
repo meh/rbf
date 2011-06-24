@@ -14,8 +14,17 @@ describe RBF do
 
   describe '#optimize' do
     it 'optimizes correctly +- and -+' do
-      RBF.optimize(RBF.parse('+-')).should == []
-      RBF.optimize(RBF.parse('-+')).should == []
+      RBF.optimize('+-').should == []
+      RBF.optimize('-+').should == []
+    end
+
+    it 'optimizes correctly <> and ><' do
+      RBF.optimize('<>').should == []
+      RBF.optimize('><').should == []
+    end
+
+    it 'optimizes correctly empty loops' do
+      RBF.optimize('[[][[[]]]]').should == []
     end
   end
 end

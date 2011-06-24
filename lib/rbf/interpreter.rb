@@ -10,87 +10,12 @@
 #  0. You just DO WHAT THE FUCK YOU WANT TO.
 #++
 
-require 'stringio'
-
-class IO
-  begin
-    require 'Win32API'
-
-    def read_char
-      Win32API.new('crtdll', '_getch', [], 'L').Call
-    end
-  rescue LoadError
-    def read_char
-      system 'stty raw -echo'
-
-      STDIN.getc
-    ensure
-      system 'stty -raw echo'
-    end
-  end
-end
+require 'rbf/interpreter/extensions'
+require 'rbf/interpreter/storage'
 
 module RBF
 
 class Interpreter
-  class Storage < Hash
-    attr_reader :position
-
-    def initialize (data)
-      if data.is_a?(Array)
-        parent = {}
-
-        data.each_with_index {|value, index|
-          parent[index] = value
-        }
-
-        super(parent)
-      else
-        super
-      end
-
-      @position = 0
-    end
-
-    def check!
-      unless self[@position].is_a?(Integer)
-        self[@position] = 0
-      end
-    end
-
-    def forward!
-      @position += 1
-    end
-
-    def backward!
-      @position -= 1
-    end 
-
-    def increase!
-      check!
-
-      self[@position] += 1
-    end
-
-    def decrease!
-      check!
-
-      self[@position] -= 1
-    end
-
-    def set (value, position=nil)
-      self[position || @position] = value.ord
-    end
-
-    def get (position=nil)
-      self[position || @position].to_i rescue 0
-    end
-
-    def inspect
-      "#<Storage(#{position}): #{super}>"
-    end
-  end
-
   attr_reader :options, :storage
 
   def initialize (options={})
@@ -103,6 +28,7 @@ class Interpreter
     @parser    = RBF::Parser.syntax(RBF.syntax(options[:syntax])).new
     @transform = RBF::Transform.new
     @optimizer = RBF::Optimizer.new(options)
+    @jit       = RBF::JIT.new(options)
   end
   
   def parse (text)
@@ -116,12 +42,18 @@ class Interpreter
   end
 
   def evaluate (tree, options=nil)
-    options ||= {}
+    options = @options.merge(options || {})
 
     if options[:catch]
       @output = StringIO.new
     else
       @output = STDOUT
+    end
+
+    tree = parse(tree)
+
+    if JIT.supported? && !options[:catch]
+      return @jit.compile(tree).execute
     end
 
     cycle(parse(tree))

@@ -12,4 +12,5 @@ Gem::Specification.new {|s|
 
     s.add_dependency('parslet')
     s.add_dependency('colorb')
+    s.add_dependency('memoized')
 }
