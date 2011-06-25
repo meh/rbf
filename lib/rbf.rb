@@ -104,7 +104,7 @@ module RBF
             end
           }.new))
 
-          puts if interpreter.output.last != "\n"
+          puts if interpreter.output.newline? && interpreter.output.last != "\n"
         end
       rescue SyntaxError
         next

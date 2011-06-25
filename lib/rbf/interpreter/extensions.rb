@@ -21,7 +21,7 @@ class IO
     end
   rescue LoadError
     def read_char
-      system 'stty raw -echo'
+      system 'stty raw'
 
       STDIN.getc
     ensure

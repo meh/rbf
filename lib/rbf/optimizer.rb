@@ -10,6 +10,8 @@
 #  0. You just DO WHAT THE FUCK YOU WANT TO.
 #++
 
+require 'memoized'
+
 module RBF
 
 class Optimizer
@@ -38,10 +40,9 @@ class Optimizer
 
   def optimize (tree)
     result = tree.clone
-    algos  = algorithms
 
     begin
-      changed = algos.any? {|algo|
+      changed = algorithms.any? {|algo|
         algo.optimize(result)
       }
     end while changed
@@ -49,6 +50,7 @@ class Optimizer
     result
   end
 
+  memoize
   def algorithms
     @@optimizations.map {|(name, block)|
       Algorithm.new(self, &block) unless options[name] == false
