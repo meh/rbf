@@ -48,69 +48,79 @@ module RBF
   end
 
   def self.repl (options=nil)
-    require 'colorb'
+    begin
+      require 'colorb'
+      require 'readline'
+    rescue LoadError
+      warn 'You need colorb and readline to use the REPL, install them.'
+
+      return false
+    end
 
     interpreter = Interpreter.new(options || {})
 
-    loop do
-      STDOUT.print '>> '.bold
-      STDOUT.flush
+    while line = (begin
+      Readline.readline('>> '.bold, true)
+    rescue Exception => e
+      nil
+    end)
+      if line.start_with?('!')
+        case line[1 .. -1]
+          when 'exit', 'quit'
+            break
 
-      begin
-        line = STDIN.gets.chomp rescue nil or raise SystemExit
-      rescue Interrupt, SystemExit
-        puts "\nExiting REPL."
+          when 'storage'
+            STDOUT.puts interpreter.storage.inspect
 
-        return false
+          when /^position(?:\s+(\d+))?$/
+            if $1
+              interpreter.storage.position = $1
+            else
+              STDOUT.puts interpreter.storage.position.to_s.bold
+            end
+
+          when /^get(?:\s+(\d+))?$/
+            STDOUT.puts "#{($1 || interpreter.storage.position).to_s.bold}: #{interpreter.storage.get($1)}"
+
+          when /^set(?:\s+(\d+)\s+(\d+))/
+            interpreter.storage.set($2.to_i, $1.to_i)
+
+          when 'clear'
+            interpreter.storage.clear!
+
+          when 'reset'
+            interpreter.storage.reset!
+
+          else
+            STDOUT.puts 'Command not found or used improperly'.red
+        end
+
+        next
       end
 
       begin
-        if line.start_with?('!')
-          case line[1 .. -1]
-            when 'exit', 'quit'
-              return true
+        interpreter.evaluate(line, interpreter.options.merge(:output => Class.new {
+          attr_reader :last
 
-            when 'storage'
-              STDOUT.puts interpreter.storage.inspect
+          def print (text)
+            STDOUT.print(text)
 
-            when /^position(?:\s+(\d+))?$/
-              if $1
-                interpreter.storage.position = $1
-              else
-                STDOUT.puts interpreter.storage.position.to_s.bold
-              end
-
-            when /^get(?:\s+(\d+))?$/
-              STDOUT.puts "#{($1 || interpreter.storage.position).to_s.bold}: #{interpreter.storage.get($1)}"
-
-            when /^set(?:\s+(\d+)\s+(\d+))/
-              interpreter.storage.set($2.to_i, $1.to_i)
-
-            else
-              STDOUT.puts 'Command not found or used improperly'.red
+            @last = text[-1]
           end
-        else
-          interpreter.evaluate(line, interpreter.options.merge(:output => Class.new {
-            attr_reader :last
 
-            def print (text)
-              STDOUT.print(text)
+          def flush
+            STDOUT.sync
+          end
+        }.new))
 
-              @last = text[-1]
-            end
-
-            def flush
-              STDOUT.sync
-            end
-          }.new))
-
-          puts if interpreter.output.newline? && interpreter.output.last != "\n"
-        end
+        puts if interpreter.output.last && interpreter.output.last != "\n"
       rescue SyntaxError
         next
       rescue
         STDOUT.puts $!.inspect.red, $@.join("\n")
       end
     end
+    
+    puts "\nExiting REPL."
   end
 end

@@ -65,6 +65,15 @@ class Storage < Hash
     self[position ? position.to_i : @position.to_i].to_i rescue 0
   end
 
+  def clear!
+    self.clear
+  end
+
+  def reset!
+    clear!
+    @position = 0
+  end
+
   def inspect
     "#<Storage(#{position}): #{super}>"
   end

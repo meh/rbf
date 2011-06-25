@@ -11,6 +11,5 @@ Gem::Specification.new {|s|
     s.executables  = ['rbf']
 
     s.add_dependency('parslet')
-    s.add_dependency('colorb')
     s.add_dependency('memoized')
 }
