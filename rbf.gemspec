@@ -1,6 +1,6 @@
 Gem::Specification.new {|s|
     s.name         = 'rbf'
-    s.version      = '0.0.7'
+    s.version      = '0.0.7.1'
     s.author       = 'meh.'
     s.email        = 'meh@paranoici.org'
     s.homepage     = 'http://github.com/meh/rbf'
