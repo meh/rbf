@@ -22,6 +22,8 @@ module Readline
   def self.supported?
     require 'colorb'
     require 'readline'
+
+    true
   rescue Exception => e
     false
   end
