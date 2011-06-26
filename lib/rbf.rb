@@ -16,6 +16,41 @@ require 'rbf/optimizer'
 require 'rbf/jit'
 require 'rbf/interpreter'
 
+module Readline
+  Commands = ['!exit', '!quit', '!storage', '!position', '!get', '!set', '!clear', '!reset']
+
+  def self.supported?
+    require 'colorb'
+    require 'readline'
+  rescue Exception => e
+    false
+  end
+
+  if supported?
+    self.completion_proc = proc {|s|
+      next unless s.start_with?('!')
+
+      Commands.grep(/^#{Regexp.escape(s)}/)
+    }
+  end
+
+  def self.readline_with_hist_management
+    begin
+      line = Readline.readline('>> '.bold, true)
+    rescue Exception => e
+      return
+    end
+
+    return unless line
+
+    if line =~ /^\s*$/ or Readline::HISTORY.to_a[-2] == line
+      Readline::HISTORY.pop
+    end
+
+    line
+  end
+end
+
 module RBF
   def self.syntax (name)
     name.is_a?(Hash) ? name :
@@ -59,11 +94,9 @@ module RBF
 
     interpreter = Interpreter.new(options || {})
 
-    while line = (begin
-      Readline.readline('>> '.bold, true)
-    rescue Exception => e
-      nil
-    end)
+    while line = Readline.readline_with_hist_management
+      line.rstrip!
+
       if line.start_with?('!')
         case line[1 .. -1]
           when 'exit', 'quit'
