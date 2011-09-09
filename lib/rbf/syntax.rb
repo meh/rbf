@@ -40,6 +40,20 @@ module Syntax
     :while_start => '[',
     :while_end   => ']'
   }
+
+  Trollscript = {
+    :forward  => 'ooo',
+    :backward => 'ool',
+
+    :increase => 'olo',
+    :decrease => 'oll',
+
+    :output => 'loo',
+    :input  => 'lol',
+
+    :while_start => 'llo',
+    :while_end   => 'lll'
+  }
 end
 
 end
