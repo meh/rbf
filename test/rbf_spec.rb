@@ -3,12 +3,16 @@ require 'rbf'
 
 describe RBF do
   describe '#parse' do
-    it 'parses correctly "++[.,]"' do
+    it 'parses correctly "++[.]"' do
       RBF.parse('++[.]').should == ["+", "+", ["."]]
     end
 
     it 'parses correctly "XD XD [PLS]" for Nintendo syntax' do
       RBF.parse('XD XD [PLS]', RBF::Syntax::Nintendo).should == ["+", "+", ["."]]
+    end
+
+    it 'parses correctly oloololloloolll for Trollscript syntax' do
+      RBF.parse('oloololloloolll', RBF::Syntax::Trollscript).should == ["+", "+", ["."]]
     end
   end
 
